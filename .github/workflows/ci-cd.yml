@@ -48,10 +48,21 @@ jobs:
 
     - name: Setup pnpm
       run: |
-        corepack enable
-        corepack prepare pnpm@10.12.1 --activate
+        echo "Enabling corepack..."
+        corepack enable || (echo "Corepack enable failed" && exit 1)
+        echo "Preparing pnpm version..."
+        corepack prepare pnpm@10.12.1 --activate || (echo "Corepack prepare failed" && exit 1)
+        echo "Checking corepack status..."
+        corepack --version
+
     - name: Verify pnpm version
-      run: pnpm --version
+      run: |
+        echo "Verifying pnpm installation..."
+        which pnpm || (echo "pnpm not found in PATH" && exit 1)
+        pnpm --version
+        pnpm --help | head -10
+        echo "Checking pnpm-workspace.yaml..."
+        cat pnpm-workspace.yaml
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -60,7 +71,13 @@ jobs:
         cache: 'pnpm'
 
     - name: Install dependencies
-      run: pnpm install
+      run: |
+        echo "Starting pnpm install with verbose logging..."
+        echo "Current directory: $(pwd)"
+        ls -la
+        echo "Checking if pnpm-lock.yaml exists..."
+        ls -la pnpm-lock.yaml
+        pnpm install --frozen-lockfile --verbose || (echo "pnpm install failed with exit code $?" && pnpm install --verbose && exit 1)
 
     - name: Build apps
       run: pnpm build
