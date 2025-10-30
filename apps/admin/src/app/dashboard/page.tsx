@@ -31,7 +31,7 @@ export default function Dashboard() {
             headers: { 'x-api-key': session?.user?.id || '' }
           }),
           fetch(`${apiUrl}/api/posts`, {
-            headers: { 'x-api-key': (session?.user as any)?.id || '' }
+            headers: { 'x-api-key': session?.user?.id || '' }
           }),
         ]);
 
@@ -60,7 +60,7 @@ export default function Dashboard() {
     return <div className="flex justify-center items-center h-64">Loading dashboard...</div>;
   }
 
-  const isAdmin = (session?.user as any)?.role === 'admin';
+  const isAdmin = session?.user?.role === 'admin';
 
   return (
     <div className="px-4 py-6 sm:px-0">
