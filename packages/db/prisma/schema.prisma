@@ -1,0 +1,228 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Member {
+  id                  String      @id @default(cuid())
+  telegramUserId      String      @unique
+  username            String?
+  firstName           String?
+  lastName            String?
+  email               String?
+  emailConsent        Boolean     @default(false)
+  membershipNumber    String?
+  postcode            String?
+  wardSlug            String?
+  status              MemberStatus @default(PENDING)
+  approvedBy          String?
+  approvedAt          DateTime?
+  notes               String?
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+  deletedAt           DateTime?
+
+  // Relations
+  joinRequests        JoinRequest[]
+  auditLog            AuditLog[]
+  formSubmissions     FormSubmission[]
+  rotaSlotAssignments RotaSlot[]
+
+  @@map("members")
+}
+
+model JoinRequest {
+  id              String          @id @default(cuid())
+  telegramUserId  String
+  chatId          String
+  wardSlug        String?
+  source          RequestSource
+  payloadSnapshot Json?
+  status          RequestStatus   @default(PENDING)
+  createdAt       DateTime        @default(now())
+  resolvedAt      DateTime?
+  resolverId      String?
+
+  // Relations
+  member          Member          @relation(fields: [telegramUserId], references: [telegramUserId], onDelete: Cascade)
+
+  @@map("join_requests")
+}
+
+enum PostStatus {
+  DRAFT
+  READY
+  SCHEDULED
+  SENT
+}
+
+model Post {
+  id              String     @id @default(cuid())
+  channelMsgId    String?
+  type            String
+  title           String?
+  content         String?
+  status          PostStatus @default(DRAFT)
+  scheduledAt     DateTime?
+  approvedBy      String?
+  approvedAt      DateTime?
+  utmUrl          String?
+  postedAt        DateTime?
+  views           Int        @default(0)
+  clicks          Int        @default(0)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  // Relations
+  media           Media[]
+
+  @@map("posts")
+}
+
+model Media {
+  id          String   @id @default(cuid())
+  postId      String
+  url         String
+  type        String   // 'image', 'video', 'document'
+  filename    String?
+  size        Int?
+  createdAt   DateTime @default(now())
+
+  // Relations
+  post        Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@map("media")
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  title       String
+  startTs     DateTime
+  endTs       DateTime?
+  location    String?
+  wardSlug    String?
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  rotaSlots   RotaSlot[]
+
+  @@map("events")
+}
+
+model RotaSlot {
+  id                String   @id @default(cuid())
+  eventId           String
+  role              String   // e.g., "Gazebo", "Table", "Flags", "QR Banner", "Leaflets", "Pens", "Wipes"
+  required          Boolean  @default(true)
+  assignedMemberId  String?
+  assignedAt        DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  event             Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  assignedMember    Member?  @relation(fields: [assignedMemberId], references: [id], onDelete: SetNull)
+
+  @@map("rota_slots")
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  memberId    String
+  at          DateTime @default(now())
+  by          String
+  action      String
+  details     Json?
+
+  // Relations
+  member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@map("audit_logs")
+}
+
+enum MemberStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  DELETED
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum RequestSource {
+  COMMUNITY
+  OPS
+}
+
+model Form {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  fields      Json      // Array of field definitions
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  submissions FormSubmission[]
+
+  @@map("forms")
+}
+
+model FormSubmission {
+  id          String    @id @default(cuid())
+  formId      String
+  memberId    String?
+  data        Json      // Submitted form data
+  submittedAt DateTime  @default(now())
+
+  // Relations
+  form        Form      @relation(fields: [formId], references: [id], onDelete: Cascade)
+  member      Member?   @relation(fields: [memberId], references: [id], onDelete: SetNull)
+
+  @@map("form_submissions")
+}
+
+model ModerationAction {
+  id          String   @id @default(cuid())
+  action      String   // 'mute', 'ban', 'warn', etc.
+  targetUserId String
+  moderatorId String
+  reason      String?
+  duration    Int?     // In hours for temporary actions
+  createdAt   DateTime @default(now())
+
+  @@map("moderation_actions")
+}
+
+model Setting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value Json
+
+  @@map("settings")
+}
+
+model UserRole {
+  id       String @id @default(cuid())
+  userId   String
+  role     String // 'admin', 'ward_lead'
+  wardSlug String? // For ward leads
+
+  @@unique([userId, role, wardSlug])
+
+  @@map("user_roles")
+}

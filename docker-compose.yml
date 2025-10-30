@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: reformerdingtontelegram
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/reformerdingtontelegram
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      ADMIN_USER_IDS: ${ADMIN_USER_IDS}
+      WARD_LEADS: ${WARD_LEADS}
+      GROUP_FORUM_ID: ${GROUP_FORUM_ID}
+      GROUP_OPS_ID: ${GROUP_OPS_ID}
+      GROUP_COMMITTEE_ID: ${GROUP_COMMITTEE_ID}
+      GROUP_APPROVALS_ID: ${GROUP_APPROVALS_ID}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
+    ports:
+      - "3001:3000"
+    depends_on:
+      - postgres
+
+  worker:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/reformerdingtontelegram
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      ADMIN_USER_IDS: ${ADMIN_USER_IDS}
+    ports:
+      - "3002:3000"
+    depends_on:
+      - postgres
+
+  admin:
+    build:
+      context: .
+      dockerfile: apps/admin/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/reformerdingtontelegram
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      NEXTAUTH_URL: ${NEXTAUTH_URL}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:

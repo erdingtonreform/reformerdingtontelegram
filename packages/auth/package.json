@@ -1,0 +1,39 @@
+{
+  "name": "@reformerdingtontelegram/auth",
+  "version": "1.0.0",
+  "description": "Authentication package with NextAuth configuration",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint src/**/*.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.12.1",
+  "dependencies": {
+    "@types/express": "^5.0.5",
+    "argon2": "^0.44.0",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.2.0",
+    "next-auth": "^4.24.0",
+    "qrcode": "^1.5.4",
+    "rate-limit": "^0.1.1",
+    "speakeasy": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^20.19.24",
+    "@types/qrcode": "^1.5.6",
+    "@types/speakeasy": "^2.0.10",
+    "eslint": "^9.38.0",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.5",
+    "typescript": "^5.9.3"
+  }
+}
